@@ -1,8 +1,13 @@
 package com.example.demo.service;
 
 import com.example.demo.model.Campaign;
+import com.example.demo.model.CampaignStatus;
+import com.example.demo.model.User;
 import com.example.demo.repository.CampaignRepository;
+import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,8 +19,22 @@ public class CampaignService {
     private final CampaignRepository campaignRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     public CampaignService(CampaignRepository campaignRepository) {
         this.campaignRepository = campaignRepository;
+    }
+
+    private User getCurrentUser() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username;
+        if (principal instanceof UserDetails) {
+            username = ((UserDetails) principal).getUsername();
+        } else {
+            username = principal.toString();
+        }
+        return userRepository.findByEmail(username).orElseThrow(() -> new RuntimeException("User not found"));
     }
 
     public List<Campaign> getAllCampaigns() {
@@ -23,6 +42,9 @@ public class CampaignService {
     }
 
     public Campaign createCampaign(Campaign campaign) {
+        User user = getCurrentUser();
+        campaign.setUser(user);
+        campaign.setStatus(CampaignStatus.ON);
         return campaignRepository.save(campaign);
     }
 
@@ -34,7 +56,6 @@ public class CampaignService {
             campaign.setKeywords(campaignDetails.getKeywords());
             campaign.setBidAmount(campaignDetails.getBidAmount());
             campaign.setCampaignFund(campaignDetails.getCampaignFund());
-            campaign.setStatus(campaignDetails.getStatus());
             campaign.setTown(campaignDetails.getTown());
             campaign.setRadius(campaignDetails.getRadius());
             return Optional.of(campaignRepository.save(campaign));}
