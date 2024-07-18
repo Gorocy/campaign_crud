@@ -12,8 +12,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.example.demo.model.CampaignStatus.ON;
-
 @Entity
 @Setter
 @Getter
@@ -48,13 +46,16 @@ public class Campaign {
     @NotNull
     private Integer radius;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
-    public Campaign(String name, List<CampaignKeyword> keywords, BigDecimal bidAmount, BigDecimal campaignFund, Town town, Integer radius) {
+    public Campaign(String name, List<CampaignKeyword> keywords, BigDecimal bidAmount, BigDecimal campaignFund, CampaignStatus status, Town town, Integer radius) {
         this.name = name;
         this.keywords = keywords;
         this.bidAmount = bidAmount;
         this.campaignFund = campaignFund;
-        this.status = ON;
+        this.status = status;
         this.town = town;
         this.radius = radius;
 
