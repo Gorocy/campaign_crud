@@ -6,6 +6,7 @@ import com.example.demo.model.User;
 import com.example.demo.repository.CampaignRepository;
 import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -18,12 +19,12 @@ public class CampaignService {
 
     private final CampaignRepository campaignRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Autowired
-    public CampaignService(CampaignRepository campaignRepository) {
+    public CampaignService(CampaignRepository campaignRepository, UserRepository userRepository) {
         this.campaignRepository = campaignRepository;
+        this.userRepository = userRepository;
     }
 
     private User getCurrentUser() {
@@ -48,8 +49,22 @@ public class CampaignService {
         return campaignRepository.save(campaign);
     }
 
-    public Optional<Campaign> updateCampaign(Integer id, Campaign campaignDetails) {
+    public ResponseEntity<String>  updateCampaign(Integer id,
+                                             UserDetails userDetails,
+                                             Campaign campaignDetails) {
         Optional<Campaign> optionalCampaign = campaignRepository.findById(id);
+
+        if (!campaignDetails.getId().equals(optionalCampaign.get().getId())) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String username = userDetails.getUsername();
+        Optional<User> user = userRepository.findByEmail(username);
+
+        if (user.isEmpty() || !optionalCampaign.get().getUser().getId().equals(user.get().getId())) {
+            return ResponseEntity.status(403).body("You are not authorized to delete this campaign");
+        }
+
         if (optionalCampaign.isPresent()) {
             Campaign campaign = optionalCampaign.get();
             campaign.setName(campaignDetails.getName());
@@ -58,12 +73,35 @@ public class CampaignService {
             campaign.setCampaignFund(campaignDetails.getCampaignFund());
             campaign.setTown(campaignDetails.getTown());
             campaign.setRadius(campaignDetails.getRadius());
-            return Optional.of(campaignRepository.save(campaign));}
+            Optional.of(campaignRepository.save(campaign));
+            return ResponseEntity.ok("Successfully updated campaign");
+        }
 
-        return Optional.empty();
+        return ResponseEntity.notFound().build();
     }
 
-    public void deleteCampaign(Integer id) {
+    public ResponseEntity<String> deleteCampaign(Integer id, UserDetails userDetails) {
+        Optional<Campaign> campaign = campaignRepository.findById(id);
+        if (campaign.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        String username = userDetails.getUsername();
+        Optional<User> user = userRepository.findByEmail(username);
+
+        if (user.isEmpty() || !campaign.get().getUser().getId().equals(user.get().getId())) {
+            return ResponseEntity.status(403).body("You are not authorized to delete this campaign");
+        }
+
         campaignRepository.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
+
+    public Optional<Campaign> getCampaignById(Integer id) {
+        return campaignRepository.findById(id);
+    }
+
+    public List<Campaign> findCampaignsByUsername(String username) {
+        User user = userRepository.findByEmail(username).orElseThrow(() -> new RuntimeException("User not found"));
+        return campaignRepository.findByUser(user);
     }
 }

@@ -18,8 +18,12 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 public class SecurityConfiguration {
 
     private static final String[] WHITE_LIST_URL = {"/api/campaigns/all",
+            "/api/campaigns/{id}",
             "/security/**",
             "/api/auth/**",
+            "/api/enums/campaign-status",
+            "/api/enums/towns",
+            "/api/enums/keywords"
     };
 
     private final JwtAuthenticationFilter jwtAuthFilter;
