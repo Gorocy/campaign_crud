@@ -54,7 +54,7 @@ public class CampaignService {
                                              Campaign campaignDetails) {
         Optional<Campaign> optionalCampaign = campaignRepository.findById(id);
 
-        if (!campaignDetails.getId().equals(optionalCampaign.get().getId())) {
+        if (optionalCampaign.isEmpty() || !campaignDetails.getId().equals(optionalCampaign.get().getId())) {
             return ResponseEntity.notFound().build();
         }
 
@@ -65,19 +65,15 @@ public class CampaignService {
             return ResponseEntity.status(403).body("You are not authorized to delete this campaign");
         }
 
-        if (optionalCampaign.isPresent()) {
-            Campaign campaign = optionalCampaign.get();
-            campaign.setName(campaignDetails.getName());
-            campaign.setKeywords(campaignDetails.getKeywords());
-            campaign.setBidAmount(campaignDetails.getBidAmount());
-            campaign.setCampaignFund(campaignDetails.getCampaignFund());
-            campaign.setTown(campaignDetails.getTown());
-            campaign.setRadius(campaignDetails.getRadius());
-            Optional.of(campaignRepository.save(campaign));
-            return ResponseEntity.ok("Successfully updated campaign");
-        }
-
-        return ResponseEntity.notFound().build();
+        Campaign campaign = optionalCampaign.get();
+        campaign.setName(campaignDetails.getName());
+        campaign.setKeywords(campaignDetails.getKeywords());
+        campaign.setBidAmount(campaignDetails.getBidAmount());
+        campaign.setCampaignFund(campaignDetails.getCampaignFund());
+        campaign.setTown(campaignDetails.getTown());
+        campaign.setRadius(campaignDetails.getRadius());
+        Optional.of(campaignRepository.save(campaign));
+        return ResponseEntity.ok("Successfully updated campaign");
     }
 
     public ResponseEntity<String> deleteCampaign(Integer id, UserDetails userDetails) {

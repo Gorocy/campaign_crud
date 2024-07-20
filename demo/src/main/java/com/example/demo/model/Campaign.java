@@ -16,7 +16,7 @@ import java.util.List;
 @Setter
 @Getter
 @NoArgsConstructor
-@Table(name = "campaign")
+@Table(name = "campaigns")
 public class Campaign {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,7 +50,11 @@ public class Campaign {
     @JoinColumn(name = "user_id")
     private User user;
 
-    public Campaign(String name, List<CampaignKeyword> keywords, BigDecimal bidAmount, BigDecimal campaignFund, CampaignStatus status, Town town, Integer radius) {
+    @ManyToOne
+    @JoinColumn(name = "product_id")
+    private Product product;
+
+    public Campaign(String name, List<CampaignKeyword> keywords, BigDecimal bidAmount, BigDecimal campaignFund, CampaignStatus status, Town town, Integer radius, Product product) {
         this.name = name;
         this.keywords = keywords;
         this.bidAmount = bidAmount;
@@ -58,6 +62,7 @@ public class Campaign {
         this.status = status;
         this.town = town;
         this.radius = radius;
+        this.product = product;
 
     }
 }

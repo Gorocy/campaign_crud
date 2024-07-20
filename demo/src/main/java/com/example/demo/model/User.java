@@ -24,7 +24,8 @@ import java.util.List;
 public class User implements UserDetails {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonIgnore
     private Integer id;
 
     @NotBlank
@@ -43,6 +44,10 @@ public class User implements UserDetails {
     @JsonIgnore
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "user")
+    private List<Product> products;
 
     @JsonIgnore
     @Override
