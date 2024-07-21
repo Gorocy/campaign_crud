@@ -27,8 +27,14 @@ public class ProductController {
     }
 
     @GetMapping("/get")
-    public ResponseEntity<Optional<List<Product>>> getAllProductsByUser() {
-        return ResponseEntity.ok(productService.getAllProductsByUser());
+    public ResponseEntity<?> getAllProductsByUser() {
+        Optional<List<Product>> productsOptional = productService.getAllProductsByUser();
+
+        if (productsOptional.isPresent() && !productsOptional.get().isEmpty()) {
+            return ResponseEntity.ok(productsOptional.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
 }
