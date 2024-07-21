@@ -4,6 +4,7 @@ import com.example.demo.model.Campaign;
 import com.example.demo.model.Product;
 import com.example.demo.repository.CampaignRepository;
 import com.example.demo.request.CampaignRequest;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+@AllArgsConstructor
 @Service
 public class CampaignService {
 
@@ -19,13 +21,6 @@ public class CampaignService {
     private final UserService userService;
 
     private final ProductService productService;
-
-    @Autowired
-    public CampaignService(CampaignRepository campaignRepository, UserService userService, ProductService productService) {
-        this.campaignRepository = campaignRepository;
-        this.userService = userService;
-        this.productService = productService;
-    }
 
     public List<Campaign> getAllCampaigns() {
         return campaignRepository.findAll();

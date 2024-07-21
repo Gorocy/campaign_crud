@@ -4,6 +4,7 @@ import com.example.demo.model.Product;
 import com.example.demo.model.User;
 import com.example.demo.repository.ProductRepository;
 import com.example.demo.repository.UserRepository;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,19 +13,13 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+@AllArgsConstructor
 @Service
 public class ProductService {
 
     private final ProductRepository productRepository;
 
     private final UserService userService;
-
-    @Autowired
-    public ProductService(ProductRepository productRepository, UserService userService) {
-        this.productRepository = productRepository;
-        this.userService = userService;
-    }
-
 
     public Product createProduct(Product product) {
         product.setUser(userService.getCurrentUser());
