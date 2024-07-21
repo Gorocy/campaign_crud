@@ -2,10 +2,9 @@ package com.example.demo.controller;
 
 import com.example.demo.model.Product;
 import com.example.demo.service.ProductService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,34 +14,22 @@ import java.util.Optional;
 @RequestMapping("/api/products")
 public class ProductController {
 
+    private final ProductService productService;
+
     @Autowired
-    private ProductService productService;
+    public ProductController(ProductService productService) {
+        this.productService = productService;
+    }
 
     @PostMapping("/create")
-    public ResponseEntity<Product> createProduct(@AuthenticationPrincipal UserDetails userDetails,
-                                                 @RequestBody Product product) {
-        Product createdProduct = productService.createProduct(product, userDetails);
-        return ResponseEntity.ok(createdProduct);
+    public Product createProduct(@Valid @RequestBody Product product) {
+        return productService.createProduct(product);
     }
 
     @GetMapping("/get")
-    public ResponseEntity<Optional<List<Product>>> getAllProductsByUserId(@AuthenticationPrincipal UserDetails userDetails) {
-        try {
-            Optional<List<Product>> products = productService.getAllProductsByUser(userDetails);
-            return ResponseEntity.ok(products);
-        }catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<Optional<List<Product>>> getAllProductsByUser() {
+        return ResponseEntity.ok(productService.getAllProductsByUser());
     }
 
-    @GetMapping("/get/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable Integer id) {
-        try {
-        Optional<Product> product = productService.getProductById(id);
-        return product.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
-        }catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
 }
 

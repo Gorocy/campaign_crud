@@ -34,6 +34,7 @@ public class User implements UserDetails {
     @NotBlank
     private String lastName;
 
+    @Column(unique=true)
     @NotBlank
     private String email;
 

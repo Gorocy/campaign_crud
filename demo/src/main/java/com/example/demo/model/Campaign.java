@@ -43,6 +43,7 @@ public class Campaign {
     @NotNull
     private Town town;
 
+    @Min(value = 1)
     @NotNull
     private Integer radius;
 
@@ -63,6 +64,5 @@ public class Campaign {
         this.town = town;
         this.radius = radius;
         this.product = product;
-
     }
 }

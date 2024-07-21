@@ -1,12 +1,11 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.Campaign;
+import com.example.demo.request.CampaignRequest;
 import com.example.demo.service.CampaignService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,47 +22,48 @@ public class CampaignController {
         this.campaignService = campaignService;
     }
 
+    @PostMapping("/create")
+    public ResponseEntity<Object> createCampaign(@Valid @RequestBody CampaignRequest campaignRequest) {
+        try {
+            return ResponseEntity.ok(campaignService.createCampaign(campaignRequest));
+        }catch (Exception e){
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+
+    }
+
     @GetMapping("/all")
     public List<Campaign> getAllCampaigns() {
         return campaignService.getAllCampaigns();
     }
 
     @GetMapping("/user")
-    public List<Campaign> getCampaignsByUser(@AuthenticationPrincipal UserDetails userDetails) {
-        String username = userDetails.getUsername();
-        return campaignService.findCampaignsByUsername(username);
+    public List<Campaign> getCampaignsByUser() {
+        return campaignService.findCampaignsByUser();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Campaign> getCampaignById(@PathVariable Integer id) {
-        Optional<Campaign> campaign = campaignService.getCampaignById(id);
-        if (campaign.isPresent()) {
-            return ResponseEntity.ok(campaign.get());
+    public ResponseEntity<Optional<Campaign>> getCampaignById(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(campaignService.getCampaignById(id));
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.notFound().build();
-    }
-
-    @PostMapping("/create")
-    public Campaign createCampaign(@Valid @RequestBody Campaign campaign) {
-        return campaignService.createCampaign(campaign);
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<?> updateCampaign(@AuthenticationPrincipal UserDetails userDetails,
-                                                   @PathVariable Integer id,
-                                                   @Valid @RequestBody Campaign campaignDetails) {
+    public ResponseEntity<?> updateCampaign(@Valid @RequestBody Campaign campaignDetails) {
         try {
-            return campaignService.updateCampaign(id, userDetails, campaignDetails);
+            return ResponseEntity.ok(campaignService.updateCampaign(campaignDetails));
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> deleteCampaign(@AuthenticationPrincipal UserDetails userDetails,
-                                            @PathVariable Integer id) {
+    public ResponseEntity<?> deleteCampaign(@PathVariable Integer id) {
         try {
-            return campaignService.deleteCampaign(id, userDetails);
+            return ResponseEntity.ok(campaignService.deleteCampaign(id));
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }

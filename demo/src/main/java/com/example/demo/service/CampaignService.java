@@ -1,14 +1,11 @@
 package com.example.demo.service;
 
 import com.example.demo.model.Campaign;
-import com.example.demo.model.CampaignStatus;
-import com.example.demo.model.User;
+import com.example.demo.model.Product;
 import com.example.demo.repository.CampaignRepository;
-import com.example.demo.repository.UserRepository;
+import com.example.demo.request.CampaignRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,50 +16,56 @@ public class CampaignService {
 
     private final CampaignRepository campaignRepository;
 
-    private final UserRepository userRepository;
+    private final UserService userService;
+
+    private final ProductService productService;
 
     @Autowired
-    public CampaignService(CampaignRepository campaignRepository, UserRepository userRepository) {
+    public CampaignService(CampaignRepository campaignRepository, UserService userService, ProductService productService) {
         this.campaignRepository = campaignRepository;
-        this.userRepository = userRepository;
-    }
-
-    private User getCurrentUser() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String username;
-        if (principal instanceof UserDetails) {
-            username = ((UserDetails) principal).getUsername();
-        } else {
-            username = principal.toString();
-        }
-        return userRepository.findByEmail(username).orElseThrow(() -> new RuntimeException("User not found"));
+        this.userService = userService;
+        this.productService = productService;
     }
 
     public List<Campaign> getAllCampaigns() {
         return campaignRepository.findAll();
     }
 
-    public Campaign createCampaign(Campaign campaign) {
-        User user = getCurrentUser();
-        campaign.setUser(user);
-        campaign.setStatus(CampaignStatus.ON);
+    public Object createCampaign(CampaignRequest campaignRequest) {
+
+        Optional<Product> product = productService.findById(campaignRequest.getProductId());
+
+        if (product.isEmpty() ||
+                !campaignRequest.getProductId().equals(product.get().getId()) ||
+                product.get().getUser() != userService.getCurrentUser()) {
+            return "INVALID PRODUCT ID";
+        }
+
+        Campaign campaign = new Campaign(
+                campaignRequest.getName(),
+                campaignRequest.getKeywords(),
+                campaignRequest.getBidAmount(),
+                campaignRequest.getCampaignFund(),
+                campaignRequest.getStatus(),
+                campaignRequest.getTown(),
+                campaignRequest.getRadius(),
+                product.orElse(null)
+        );
+
+        campaign.setUser(userService.getCurrentUser());
+
         return campaignRepository.save(campaign);
     }
 
-    public ResponseEntity<String>  updateCampaign(Integer id,
-                                             UserDetails userDetails,
-                                             Campaign campaignDetails) {
-        Optional<Campaign> optionalCampaign = campaignRepository.findById(id);
+    public String updateCampaign(Campaign campaignDetails) {
+        Optional<Campaign> optionalCampaign = campaignRepository.findById(campaignDetails.getId());
 
         if (optionalCampaign.isEmpty() || !campaignDetails.getId().equals(optionalCampaign.get().getId())) {
-            return ResponseEntity.notFound().build();
+            return "NO CAMPAIGN FOUND";
         }
 
-        String username = userDetails.getUsername();
-        Optional<User> user = userRepository.findByEmail(username);
-
-        if (user.isEmpty() || !optionalCampaign.get().getUser().getId().equals(user.get().getId())) {
-            return ResponseEntity.status(403).body("You are not authorized to delete this campaign");
+        if (!optionalCampaign.get().getUser().getId().equals(userService.getCurrentUser().getId())) {
+            return "You are not authorized to update this campaign";
         }
 
         Campaign campaign = optionalCampaign.get();
@@ -73,31 +76,28 @@ public class CampaignService {
         campaign.setTown(campaignDetails.getTown());
         campaign.setRadius(campaignDetails.getRadius());
         Optional.of(campaignRepository.save(campaign));
-        return ResponseEntity.ok("Successfully updated campaign");
+        return "Successfully updated campaign";
     }
 
-    public ResponseEntity<String> deleteCampaign(Integer id, UserDetails userDetails) {
+    public String deleteCampaign(Integer id) {
         Optional<Campaign> campaign = campaignRepository.findById(id);
         if (campaign.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            return "NO CAMPAIGN FOUND";
         }
-        String username = userDetails.getUsername();
-        Optional<User> user = userRepository.findByEmail(username);
 
-        if (user.isEmpty() || !campaign.get().getUser().getId().equals(user.get().getId())) {
-            return ResponseEntity.status(403).body("You are not authorized to delete this campaign");
+        if (!campaign.get().getUser().getId().equals(userService.getCurrentUser().getId())) {
+            return "You are not authorized to delete this campaign";
         }
 
         campaignRepository.deleteById(id);
-        return ResponseEntity.ok().build();
+        return "Successfully deleted campaign";
     }
 
     public Optional<Campaign> getCampaignById(Integer id) {
         return campaignRepository.findById(id);
     }
 
-    public List<Campaign> findCampaignsByUsername(String username) {
-        User user = userRepository.findByEmail(username).orElseThrow(() -> new RuntimeException("User not found"));
-        return campaignRepository.findByUser(user);
+    public List<Campaign> findCampaignsByUser() {
+        return campaignRepository.findByUser(userService.getCurrentUser());
     }
 }
