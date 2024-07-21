@@ -2,23 +2,22 @@ package com.example.demo.request;
 
 import com.example.demo.model.CampaignKeyword;
 import com.example.demo.model.CampaignStatus;
-import com.example.demo.model.Product;
 import com.example.demo.model.Town;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-@Setter
+@AllArgsConstructor
 @Getter
 public class CampaignRequest {
-    private String name;
-    private List<CampaignKeyword> keywords;
-    private BigDecimal bidAmount;
-    private BigDecimal campaignFund;
-    private CampaignStatus status;
-    private Integer productId;
-    private Town town;
-    private Integer radius;
+    private final String name;
+    private final List<CampaignKeyword> keywords;
+    private final BigDecimal bidAmount;
+    private final BigDecimal campaignFund;
+    private final CampaignStatus status;
+    private final Integer productId;
+    private final Town town;
+    private final Integer radius;
 }
