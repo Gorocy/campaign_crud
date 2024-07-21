@@ -4,6 +4,7 @@ import com.example.demo.model.Campaign;
 import com.example.demo.request.CampaignRequest;
 import com.example.demo.service.CampaignService;
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,16 +12,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
+@AllArgsConstructor
 @RestController
 @RequestMapping("/api/campaigns")
 public class CampaignController {
 
     private final CampaignService campaignService;
-
-    @Autowired
-    public CampaignController(CampaignService campaignService) {
-        this.campaignService = campaignService;
-    }
 
     @PostMapping("/create")
     public ResponseEntity<Object> createCampaign(@Valid @RequestBody CampaignRequest campaignRequest) {
