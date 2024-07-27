@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import com.example.demo.model.Campaign;
 import com.example.demo.model.Product;
+import com.example.demo.model.User;
 import com.example.demo.repository.CampaignRepository;
 import com.example.demo.request.CampaignRequest;
 import lombok.AllArgsConstructor;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,15 +29,21 @@ public class CampaignService {
     }
 
     public Object createCampaign(CampaignRequest campaignRequest) {
-
+    
         Optional<Product> product = productService.findById(campaignRequest.getProductId());
-
+    
         if (product.isEmpty() ||
                 !campaignRequest.getProductId().equals(product.get().getId()) ||
-                product.get().getUser() != userService.getCurrentUser()) {
+                !product.get().getUser().equals(userService.getCurrentUser())) {
             return "INVALID PRODUCT ID";
         }
-
+    
+        User currentUser = userService.getCurrentUser();
+        BigDecimal userBalance = currentUser.getBalance();
+        if (campaignRequest.getCampaignFund().compareTo(userBalance) > 0) {
+            return "Insufficient balance to set the campaign fund";
+        }
+    
         Campaign campaign = new Campaign(
                 campaignRequest.getName(),
                 campaignRequest.getKeywords(),
@@ -46,23 +54,29 @@ public class CampaignService {
                 campaignRequest.getRadius(),
                 product.orElse(null)
         );
-
-        campaign.setUser(userService.getCurrentUser());
-
+    
+        campaign.setUser(currentUser);
+    
         return campaignRepository.save(campaign);
     }
 
     public String updateCampaign(Campaign campaignDetails) {
         Optional<Campaign> optionalCampaign = campaignRepository.findById(campaignDetails.getId());
-
+    
         if (optionalCampaign.isEmpty() || !campaignDetails.getId().equals(optionalCampaign.get().getId())) {
             return "NO CAMPAIGN FOUND";
         }
-
+    
         if (!optionalCampaign.get().getUser().getId().equals(userService.getCurrentUser().getId())) {
             return "You are not authorized to update this campaign";
         }
-
+    
+        User currentUser = userService.getCurrentUser();
+        BigDecimal userBalance = currentUser.getBalance();
+        if (campaignDetails.getCampaignFund().compareTo(userBalance) > 0) {
+            return "Insufficient balance to set the campaign fund";
+        }
+    
         Campaign campaign = optionalCampaign.get();
         campaign.setName(campaignDetails.getName());
         campaign.setKeywords(campaignDetails.getKeywords());
@@ -70,7 +84,7 @@ public class CampaignService {
         campaign.setCampaignFund(campaignDetails.getCampaignFund());
         campaign.setTown(campaignDetails.getTown());
         campaign.setRadius(campaignDetails.getRadius());
-        Optional.of(campaignRepository.save(campaign));
+        campaignRepository.save(campaign);
         return "Successfully updated campaign";
     }
 
