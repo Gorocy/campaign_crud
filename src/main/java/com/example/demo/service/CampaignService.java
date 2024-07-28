@@ -5,6 +5,7 @@ import com.example.demo.model.Product;
 import com.example.demo.model.User;
 import com.example.demo.repository.CampaignRepository;
 import com.example.demo.request.CampaignRequest;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,7 @@ public class CampaignService {
         return campaignRepository.findAll();
     }
 
+    @Transactional
     public Object createCampaign(CampaignRequest campaignRequest) {
     
         Optional<Product> product = productService.findById(campaignRequest.getProductId());
@@ -56,10 +58,13 @@ public class CampaignService {
         );
     
         campaign.setUser(currentUser);
-    
+        
+        userService.updateUserBalance(currentUser, campaignRequest.getCampaignFund().negate());
+
         return campaignRepository.save(campaign);
     }
 
+    @Transactional
     public String updateCampaign(Campaign campaignDetails) {
         Optional<Campaign> optionalCampaign = campaignRepository.findById(campaignDetails.getId());
     
@@ -77,6 +82,8 @@ public class CampaignService {
             return "Insufficient balance to set the campaign fund";
         }
     
+        BigDecimal fundDifference = campaignDetails.getCampaignFund().subtract(optionalCampaign.get().getCampaignFund());
+        
         Campaign campaign = optionalCampaign.get();
         campaign.setName(campaignDetails.getName());
         campaign.setKeywords(campaignDetails.getKeywords());
@@ -85,18 +92,26 @@ public class CampaignService {
         campaign.setTown(campaignDetails.getTown());
         campaign.setRadius(campaignDetails.getRadius());
         campaignRepository.save(campaign);
+
+        userService.updateUserBalance(currentUser, fundDifference.negate());
+        
         return "Successfully updated campaign";
     }
 
+    @Transactional
     public String deleteCampaign(Integer id) {
         Optional<Campaign> campaign = campaignRepository.findById(id);
         if (campaign.isEmpty()) {
             return "NO CAMPAIGN FOUND";
         }
 
-        if (!campaign.get().getUser().getId().equals(userService.getCurrentUser().getId())) {
+        User currentUser = userService.getCurrentUser();
+
+        if (!campaign.get().getUser().getId().equals(currentUser.getId())) {
             return "You are not authorized to delete this campaign";
         }
+
+        userService.updateUserBalance(currentUser, campaign.get().getCampaignFund());
 
         campaignRepository.deleteById(id);
         return "Successfully deleted campaign";
